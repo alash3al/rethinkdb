@@ -11,23 +11,23 @@ import com.rethinkdb.ast.Query;
 import com.rethinkdb.response.Response;
 
 
-public class ConnectionInstance<C extends Connection> {
+public class ConnectionInstance {
 
-    private Optional<C> parent = Optional.empty();
+    private Connection parent;
     private HashMap<Long, Cursor> cursorCache = new HashMap<>();
     private Optional<SocketWrapper> socket = Optional.empty();
     private boolean closing = false;
     private Optional<ByteBuffer> headerInProgress = Optional.empty();
 
-    public ConnectionInstance(C parent) {
-        this.parent = Optional.ofNullable(parent);
+    public ConnectionInstance(Connection parent) {
+        this.parent = parent;
     }
 
-    public C connect(Optional<Integer> timeout) {
-        String parentHost = this.parent.get().hostname;
-        int parentPort = this.parent.get().port;
+    public Connection connect(Optional<Integer> timeout) {
+        String parentHost = this.parent.hostname;
+        int parentPort = this.parent.port;
         socket = Optional.of(new SocketWrapper(parentHost, parentPort, timeout));
-        return parent.get();
+        return parent;
     }
 
     public boolean isOpen() {
@@ -50,7 +50,7 @@ public class ConnectionInstance<C extends Connection> {
         }
     }
 
-    private Optional<Object> runQuery(Query query, boolean noreply) {
+    Optional<Object> runQuery(Query query, boolean noreply) {
         socket.orElseThrow(() -> new ReqlDriverError("No socket open."))
             .sendall(query.serialize());
         if(noreply){
